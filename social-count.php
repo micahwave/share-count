@@ -67,7 +67,7 @@ class GoogleCount {
 		$response = curl_exec ($curl);
 		curl_close ($curl);
 		*/
-
+		
 		$response = wp_remote_post( 'https://clients6.google.com/rpc', array(
 			'body' => '[{"method":"pos.plusones.get","id":"p","params":{"nolog":true,"id":"' . $url . '","source":"widget","userId":"@viewer","groupId":"@self"},"jsonrpc":"2.0","key":"p","apiVersion":"v1"}]',
 			'headers' => array(
@@ -75,22 +75,21 @@ class GoogleCount {
 			)
 		));
 
-		if( isset( $_GET['debug'] ) ) {
-			die( print_r( $response ) );
-		}
-		
+		if( !is_wp_error( $response ) ) {
 
-		if( $response ) {
-			$json = json_decode($response, true);
+			$json = json_decode( wp_remote_retrieve_body( $response ) );
 
-			//die_r( $json );
-			if(!isset($json[0]['error'])) {
+			if( !isset( $json[0]['error'] ) ) {
+
 				return $json[0]['result']['metadata']['globalCounts']['count'];
+				
 			} else {
-				return NULL;
+
+				return false;
 			}
+
 		} else {
-			return NULL;
+			return false;
 		}
 	}
 }
@@ -151,7 +150,7 @@ class SocialCount {
 			$json[$provider] = $this->getCount( $provider );
 		}
 
-		//die_r( $json );
+		die_r( $json );
 
 	}
 }
