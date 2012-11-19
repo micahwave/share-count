@@ -75,12 +75,12 @@ class GoogleCount {
 			)
 		));
 
-		die_r( $response );
+		die( print_r( $response ) );
 
 		if( $response ) {
 			$json = json_decode($response, true);
 
-			die_r( $json );
+			//die_r( $json );
 			if(!isset($json[0]['error'])) {
 				return $json[0]['result']['metadata']['globalCounts']['count'];
 			} else {
@@ -148,7 +148,7 @@ class SocialCount {
 			$json[$provider] = $this->getCount( $provider );
 		}
 
-		die_r( $json );
+		//die_r( $json );
 
 	}
 }
