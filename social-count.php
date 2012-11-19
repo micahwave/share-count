@@ -75,7 +75,10 @@ class GoogleCount {
 			)
 		));
 
-		die( print_r( $response ) );
+		if( isset( $_GET['debug'] ) ) {
+			die( print_r( $response ) );
+		}
+		
 
 		if( $response ) {
 			$json = json_decode($response, true);
