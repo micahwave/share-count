@@ -105,53 +105,96 @@ class SocialCount {
 	var $post_id;
 
 	/**
+	 * The last time we called our APIs for tweet counts
+	 */
+	var $last_update;
+
+	/**
 	 * Possible sources to get counts from
 	 */
-	var $providers = array(
+	var $networks = array(
 		'facebook',
 		'twitter',
 		'google'
 	);
 
 	/**
+	 * The different buttons were going to display
+	 */
+	var $buttons = array();
+
+	/**
+	 * How long to wait in between updates. Default 15 minutes.
+	 */
+	var $delay = 900;
+
+	/**
+	 * 
+	 */
+	var $current_time;
+
+	/**
 	 * Constructor
 	 */
-	function __construct( $args = array() ) {
+	function __construct( $post_id = null, $buttons = array( 'facebook', 'twitter', 'google' ) ) {
 
-		$args = wp_parse_args( $args, array(
-			'post_id' => get_the_ID(),
-			'providers' => $this->providers
-		));
+		$this->post_id = !empty( $post_id ) ? $post_id : get_the_ID();
+
+		// make sure we only accept buttons for networks we support
+		$this->buttons = array_filter( 'in_array', $this->networks );
+
+		// when was this post updated last?
+		$this->last_update = get_post_meta( $this->post_id, 'social_count_last_update', true );
+
+		// set the current time so we can reuse
+		$this->current_time = time();
+
+		// no last_update, set it to the current time
+		if( empty( $this->last_update ) ) $this->last_update = $this->current_time;
 
 		$this->renderShare();
 
 	}
 
+	/**
+	 * Is the current post ready to be scanned again?
+	 */
+	function updateCount() {
+		return ( $this->last_update + $this->delay ) > $this->current_time ? true : false;
+	}
+
+	/**
+	 * Get the number of interactions for the passed social network
+	 */ 
 	function getCount( $provider ) {
 
 		// try to get from meta
 		$count = get_post_meta( $this->post_id, 'social_count_'.$provider, true );
 
-		// no count, make API request
-		if( empty( $count ) ) {
-			//get_permalink( $this->post_id )
-			$count = call_user_func_array( array( ucwords( $provider ).'Count', 'getCount' ), array( 'url' => 'http://www.time.com' ) );
+		// get the current count if there is no count or it hasnt been updated in awhile
+		if( $this->updateCount() || empty( $count ) ) {
+
+			$count = call_user_func_array( array( $provider.'count', 'getCount' ), array( 'url' => get_permalink( $this->post_id ) ) );
+
+			// we have a value, update the meta
+			if( !empty( $count ) ) {
+				update_post_meta( $post_id, 'social_count_'.$provider, intval( $count ) );
+			}
 		}
 
 		return $count;
-
 	}
 
+	/**
+	 * Output the buttons we want
+	 */
 	function renderShare() {
 
 		$json = array();
 
-		foreach( $this->providers as $provider ) {
-			$json[$provider] = $this->getCount( $provider );
+		foreach( $this->buttons as $button ) {
+			$json[$button] = $this->getCount( $button );
 		}
-
-		die_r( $json );
-
 	}
 }
 $sc = new SocialCount();
