@@ -15,6 +15,10 @@ class TwitterCount {
 			return false;
 		}
 	}
+
+	public function get_url( $post_id ) {
+		return 'https://twitter.com/intent/tweet?text='.urlencode( get_the_title( $post_id ) ).'&url='.urlencode( get_permalink( $post_id ) );
+	}
 }
 
 /**
@@ -36,6 +40,10 @@ class FacebookCount {
 		} else {
 			return false;
 		}
+	}
+
+	public function get_url( $post_id ) {
+		return 'https://www.facebook.com/sharer/sharer.php?u='.get_permalink( $post_id ).'&t='.get_the_title( $post_id );
 	}
 }
 
@@ -70,6 +78,10 @@ class GoogleCount {
 			return false;
 		}
 	}
+
+	public function get_url( $post_id ) {
+		return 'https://plusone.google.com/_/+1/confirm?url='.urlencode( get_permalink( $post_id ) );
+	}
 }
 
 /**
@@ -95,6 +107,10 @@ class LinkedInCount {
 			return false;
 		}
 	}
+
+	public function get_url( $post_id ) {
+		return 'http://www.linkedin.com/shareArticle?mini=true&url='.urlencode( get_permalink( $post_id ) ).'&title='.urlencode( get_the_title( $post_id ) ).'&summary='.urlencode( get_the_excerpt( $post_id ) );
+	}
 }
 
 /**
@@ -117,5 +133,12 @@ class StumbleUponCount {
 
 			return false;
 		}
+	}
+
+	public function get_url( $post_id ) {
+		return sprintf( 'http://www.stumbleupon.com/submit?url=%s&title=%s',
+			urlencode( get_permalink( $post_id ) ),
+			urlencode( get_the_title( $post_id ) )
+		);
 	}
 }
