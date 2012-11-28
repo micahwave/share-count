@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Plugin Name: Social Count
+ * Plugin Name: Share Count
  * Description: Save load time by calculating share counts server-side. Supports Facebook, Twitter, Google+, LinkedIn and StumbleUpon.
  * Author: Micah Ernst
  * Author URI: http://micahernst.com
@@ -12,7 +12,7 @@ include_once( dirname(__FILE__).'/networks.php' );
 /**
  *
  */
-class SocialCount {
+class ShareCount {
 
 	/**
 	 * Possible sources to get counts from
@@ -37,13 +37,6 @@ class SocialCount {
 
 		// add some social styles to the article page
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_styles' ) );
-
-		// todo: check options to see if we should load css or not
-
-		// test
-		add_action( 'time_before_single', function() {
-			social_count();
-		});
 	}
 
 	/**
@@ -73,10 +66,6 @@ class SocialCount {
 
 		// save as a var since were looping thru	
 		$permalink = get_permalink( $post_id );
-
-		$permalink = 'http://techland.time.com/2012/11/19/wii-u-review-redux-nintendo-adds-miiverse-netflix-eshop-and-more/';
-
-		$permalink = 'http://techland.time.com/2012/11/20/oprah-tweets-love-for-microsoft-surface-from-an-ipad/';
 
 		$html = '<ul class="share-count">';
 
@@ -117,12 +106,12 @@ class SocialCount {
 		return $html;
 	}
 }
-$sc = new SocialCount();
+$sc = new ShareCount();
 
 /**
  * Helper function to get social count
  */
-function social_count() {
+function share_count() {
 	global $sc;
 	echo $sc->get_share();
 }
