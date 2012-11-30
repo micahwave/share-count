@@ -7,7 +7,7 @@
  * Author URI: http://micahernst.com
  */
 
-include_once( dirname(__FILE__).'/networks.php' );
+include_once( dirname( __FILE__ ).'/networks.php' );
 
 /**
  *
@@ -21,13 +21,37 @@ class ShareCount {
 		'facebook',
 		'twitter',
 		'google',
-		'linkedin'
+		'linkedin',
+		'stumbleupon'
 	);
 
 	/**
 	 * How long to wait in between updates. Default 15 minutes.
 	 */
 	var $timeout = 30;
+
+	/**
+	 * Store the setting for this plugin
+	 */
+	var $options = array();
+
+	/**
+	 * Default option values
+	 */
+	var $defaults = array(
+		'size' => 'default',
+		'count' => 1,
+		'verb' => 'like'
+	);
+
+	/**
+	 * Fields to display on our settings page
+	 */
+	var $fields = array(
+		'size' => 'Button Size',
+		'count' => 'Display Count',
+		'verb' => 'Facebook Verb to Display'
+	);
 
 
 	/**
@@ -37,6 +61,11 @@ class ShareCount {
 
 		// add some social styles to the article page
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_styles' ) );
+
+		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
+
+		$this->options = wp_parse_args( get_option( 'share_count_settings' ), $this->defaults );
+
 	}
 
 	/**
@@ -44,14 +73,101 @@ class ShareCount {
 	 */
 	function enqueue_styles() {
 		if( is_single() ) {
-			wp_enqueue_style( 'social-count', plugins_url( '/stylesheets/screen.css', 'social-count' ) );
+			wp_enqueue_style( 'share-count', plugins_url( '/stylesheets/screen.css', 'share-count' ) );
 		}
+	}
+
+	/**
+	 * Options page for some of our settings
+	 */
+	function submenu_page() {
+
+		add_settings_section( 'general', 'General', '__return_false', 'share-count' );
+
+		foreach( $this->fields as $field => $label ) {
+			add_settings_field( $field, $label, array( $this, $field.'_field' ), 'share-count', 'general', array(
+				'value' => $this->options[$field]
+			));
+		}
+
+		?>
+		<div class="wrap">
+
+			<div id="icon-options-general" class="icon32"></div>
+
+			<h2>Share Count</h2>
+
+			<form action="options.php" method="post">
+
+				<table class="form-table">
+					<?php
+
+					settings_fields( 'share_count_settings' );
+
+					do_settings_fields( 'share-count', 'general' );
+
+					?>
+				</table>
+
+				<input type="submit" name="submit" class="button-primary" value="Save Changes"/>
+
+			</form>
+
+		</div>
+		<?php		
+	}
+
+	/**
+	 * Size options
+	 */
+	function size_field( $args ) {
+		?>
+		<input type="radio" name="share_count_settings[size]" value="default" <?php checked( 'default', $args['value'] ); ?>/> Default<br/>
+		<input type="radio" name="share_count_settings[size]" value="large" <?php checked( 'large', $args['value'] ); ?>/> Large<br/>
+		<?php
+	}
+
+	/**
+	 *
+	 */
+	function count_field( $args ) {
+		?>
+		<input type="checkbox" name="share_count_settings[count]" value="1" <?php checked( 1, $args['value'] ); ?>/>
+		Display share count next to button
+		<?php
+	}
+
+	/**
+	 *
+	 */
+	function verb_field( $args ) {
+		?>
+		<input type="radio" name="share_count_settings[verb]" value="like" <?php checked( 'like', $args['value'] ); ?>/> Like</br>
+		<input type="radio" name="share_count_settings[verb]" value="recommend" <?php checked( 'recommend', $args['value'] ); ?>/> Recommend
+		<?php
+	}
+
+	/**
+	 * Register our submenu page
+	 */
+	function admin_menu() {
+
+		register_setting( 'share_count_settings', 'share_count_settings', array( $this, 'validate_settings' ) );
+
+		add_submenu_page( 'options-general.php', 'Share Count', 'Share Count', 'manage_options', 'share-count', array( $this, 'submenu_page' ) );
+	}
+
+	/**
+	 *
+	 */
+	function validate_settings( $input ) {
+		return $input;
 	}
 
 	/**
 	 * Output the buttons we want
 	 */
-	function get_share( $post_id = null, $networks = array( 'facebook', 'twitter', 'google', 'linkedin', 'stumbleupon' ) ) {
+	function get_share( $post_id = null, $networks = array( 'facebook', 'twitter', 'google' ) ) {
 
 		$post_id = !empty( $post_id ) ? $post_id : get_the_ID();
 
@@ -89,7 +205,7 @@ class ShareCount {
 			}
 
 			$html .= sprintf(
-				'<li class="%s"><a href="%s">'.$network.'&nbsp;<span class="icon"></span><span class="count">%s</span></a></li>',
+				'<li class="%s"><a href="%s">'.$network.'<span class="icon"></span><span class="count">%s</span></a></li>',
 				strtolower( $network ),
 				call_user_func_array( array( $network.'count', 'get_url' ), array( $post_id ) ),
 				$count
