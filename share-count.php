@@ -15,14 +15,15 @@ include_once( dirname( __FILE__ ).'/networks.php' );
 class ShareCount {
 
 	/**
-	 * Possible sources to get counts from
+	 * Display names for the networks we support
 	 */
-	var $services = array(
-		'facebook',
-		'twitter',
-		'google',
-		'linkedin',
-		'stumbleupon'
+	var $labels = array(
+		'facebook' => 'Facebook',
+		'twitter' => 'Twitter',
+		'google' => 'Google+',
+		'linkedin' => 'LinkedIn',
+		'stumbleupon' => 'StumbleUpon',
+		'reddit' => 'Reddit'
 	);
 
 	/**
@@ -57,7 +58,7 @@ class ShareCount {
 	/**
 	 * Constructor
 	 */
-	function __construct( $post_id = null, $buttons = array( 'facebook', 'twitter', 'google' ) ) {
+	function __construct( $post_id = null ) {
 
 		// add some social styles to the article page
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_styles' ) );
@@ -167,7 +168,48 @@ class ShareCount {
 	/**
 	 * Output the buttons we want
 	 */
-	function get_share( $post_id = null, $networks = array( 'facebook', 'twitter', 'google' ) ) {
+	function get_share( $post_id = null, $networks = array( 'facebook', 'twitter', 'google', 'linkedin', 'stumbleupon', 'reddit' ) ) {
+
+		$post_id = !empty( $post_id ) ? $post_id : get_the_ID();
+
+		$data = $this->get_share_data( $post_id, $networks );
+
+		$html = '';
+
+		if( count( $data ) ) {
+
+			// what should the share button say?
+
+			$total_count = get_post_meta( $post_id, 'share_count_total', true );
+
+			$share_text = $total_count ? '<strong>'.intval( $total_count ).'</strong>Sharing' : 'Share';
+
+			$html .= '<div class="share-count">';
+			$html .= '<div class="share-button"><i class="icon"></i>'.$share_text.'</div>';
+			$html .= '<ul class="share-popup">';
+
+			foreach( $data as $network ) {
+
+				$html .= sprintf(
+					'<li class="%s"><a href="%s" target="_blank"><i class="icon"></i>%s</span></a><span class="count">%s</span></li>',
+					$network['class'],
+					$network['url'],
+					$network['name'],
+					$network['count']
+				);
+			}
+
+			$html .= '</ul>';
+			$html .= '</div>';
+		}
+
+		return $html;
+	}
+
+	/**
+	 * Just get the raw share data, this will be nice for people that want to use their own markup
+	 */
+	function get_share_data( $post_id = null, $networks = array( 'facebook', 'twitter', 'google' ) ) {
 
 		$post_id = !empty( $post_id ) ? $post_id : get_the_ID();
 
@@ -183,7 +225,9 @@ class ShareCount {
 		// save as a var since were looping thru	
 		$permalink = get_permalink( $post_id );
 
-		$html = '<ul class="share-count">';
+		$data = array();
+
+		$total_count = 0;
 
 		// loop through the networks and output button markup
 		foreach( $networks as $network ) {
@@ -196,7 +240,7 @@ class ShareCount {
 			// its been too long, get an updated count
 			} else {
 				
-				$count = call_user_func_array( array( $network.'count', 'get_count' ), array( 'url' => $permalink ) );
+				$count = intval( call_user_func_array( array( $network.'count', 'get_count' ), array( 'url' => $permalink ) ) );
 
 				// save the count as long as its a number
 				if( is_numeric( $count ) ) {
@@ -204,22 +248,23 @@ class ShareCount {
 				}
 			}
 
-			$html .= sprintf(
-				'<li class="%s"><a href="%s">'.$network.'<span class="icon"></span><span class="count">%s</span></a></li>',
-				strtolower( $network ),
-				call_user_func_array( array( $network.'count', 'get_url' ), array( $post_id ) ),
-				$count
-			);
-		}
+			$data[$network]['class'] = $network;
+			$data[$network]['count'] = $count;
+			$data[$network]['url'] = call_user_func_array( array( $network.'count', 'get_url' ), array( $post_id ) );
+			$data[$network]['name'] = $this->labels[$network];
 
-		$html .= '</ul><!-- .share-count -->';
+			// increase the total count
+			$total_count += $count;
+		}
 
 		// update the last_update value if we didnt use meta this time around
+		// only update the total count when we get fresh data
 		if( !$use_meta ) {
 			update_post_meta( $post_id, 'share_count_last_update', $current_time );
+			update_post_meta( $post_id, 'share_count_total', $total_count );
 		}
 
-		return $html;
+		return $data;
 	}
 }
 $sc = new ShareCount();

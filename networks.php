@@ -12,7 +12,7 @@ class TwitterCount {
 		if( !is_wp_error( $response ) ) {
 			return json_decode( wp_remote_retrieve_body( $response ) )->count;
 		} else {
-			return false;
+			return 0;
 		}
 	}
 
@@ -38,7 +38,7 @@ class FacebookCount {
 			$json = json_decode( wp_remote_retrieve_body( $response ) );
 			return isset( $json->shares ) ? $json->shares : 0;
 		} else {
-			return false;
+			return 0;
 		}
 	}
 
@@ -71,11 +71,11 @@ class GoogleCount {
 				
 			} else {
 
-				return false;
+				return 0;
 			}
 
 		} else {
-			return false;
+			return 0;
 		}
 	}
 
@@ -104,7 +104,7 @@ class LinkedInCount {
 
 		} else {
 
-			return false;
+			return 0;
 		}
 	}
 
@@ -131,7 +131,7 @@ class StumbleUponCount {
 
 		} else {
 
-			return false;
+			return 0;
 		}
 	}
 
@@ -140,5 +140,39 @@ class StumbleUponCount {
 			urlencode( get_permalink( $post_id ) ),
 			urlencode( get_the_title( $post_id ) )
 		);
+	}
+}
+
+/**
+ * Reddit Count
+ */
+class RedditCount {
+
+	/**
+	 *
+	 */
+	public function get_count( $url ) {
+
+		$url = 'http://speedlimit-infinity.deviantart.com/art/Interview-with-Sonic-115613456';
+
+		$response = wp_remote_get( 'http://www.reddit.com/api/info.json?url=' . $url );
+
+		if( !is_wp_error( $response ) ) {
+
+			$json = json_decode( wp_remote_retrieve_body( $response ) );
+
+			if( isset( $json->data->children[0]->data->score ) ) {
+				return $json->data->children[0]->data->score;
+			} else {
+				return 0;
+			}
+		}
+	}
+
+	/**
+	 *
+	 */
+	public function get_url( $post_id ) {
+		return 'http://www.reddit.com/submit?url='.urlencode( get_permalink( $post_id ) ).'&title='.urlencode( get_the_title( $post_id ) );
 	}
 }
