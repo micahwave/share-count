@@ -153,8 +153,6 @@ class RedditCount {
 	 */
 	public function get_count( $url ) {
 
-		$url = 'http://speedlimit-infinity.deviantart.com/art/Interview-with-Sonic-115613456';
-
 		$response = wp_remote_get( 'http://www.reddit.com/api/info.json?url=' . $url );
 
 		if( !is_wp_error( $response ) ) {
