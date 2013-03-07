@@ -79,7 +79,7 @@ class ShareCount {
 	 */
 	function init() {
 		if( !wp_next_scheduled( 'share_count_cron' ) ) {
-			wp_schedule_event( time(), 'hourly', 'share_count_cron' );
+			wp_schedule_event( current_time('timestamp'), 'hourly', 'share_count_cron' );
 		}
 	}
 
