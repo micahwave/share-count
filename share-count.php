@@ -254,8 +254,10 @@ class ShareCount {
 
 		if( $posts ) {
 			foreach( $posts as $post ) {
+				setup_postdata( $post );
 				$this->get_share_data( $post->ID );
 			}
+			wp_reset_postdata();
 		}
 	}
 }
